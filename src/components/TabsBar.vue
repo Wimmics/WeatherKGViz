@@ -8,19 +8,14 @@
       <v-icon class="mr-2">mdi-chart-bar</v-icon>
       Meteorological paramaters
     </v-tab>
-    <v-tab value="mapv2">
-      <v-icon class="mr-2">mdi-map</v-icon>
-      MapV2
-    </v-tab>
   </v-tabs>
   <v-window class="windows" v-model="tab">
     <v-window-item class="window" value="map">
-      <LeafletMap></LeafletMap>
+      <Map></Map>
     </v-window-item>
     <v-window-item value="charts">
       <ChartResult></ChartResult>
     </v-window-item>
-    <v-window-item class="window" value="mapv2"> <Map></Map> </v-window-item>
   </v-window>
 </template>
 
