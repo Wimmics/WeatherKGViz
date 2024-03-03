@@ -66,14 +66,20 @@ export default {
 
   data() {
     return {
+      Color_int_region: import.meta.env.VITE_COLOR_REGION,
+      Color_int_station: import.meta.env.VITE_COLOR_STATION,
       zoom: 6,
       show: true,
       showMark: false,
       showTime: false,
       showTemp: false,
       showRain: false,
+      scale: [],
+      scaleUnit: "",
       showHumidity: false,
       showWind: false,
+      maxLegend: "",
+      minLegend: "",
       reload: true,
       loading: false,
       defaultYear: 2022,
@@ -100,6 +106,7 @@ export default {
   //Fonctions du component
 
   methods: {
+    //Changement du digramme après le changement du range de date
     handleRangeChangedEvent(range) {
       this.dataD3 = this.filterDataByDateRange(range[0], range[1]);
 
@@ -260,6 +267,7 @@ export default {
       }
       this.addLegend();
     },
+    //Ajout de la légende du diagramme D3
     addLegend() {
       const svg = d3.select("#evol_Legend");
       const legendGroup = svg
@@ -333,7 +341,8 @@ export default {
               Number(element[1]).toFixed(2) +
               " °"
           );
-          var hue = (1 - (element[1] - min) / (max - min)) * 40;
+          var hue =
+            (1 - (element[1] - min) / (max - min)) * this.Color_int_region;
           layer.setStyle({
             fillColor: hsl(hue, 100, 50),
             weight: 1,
@@ -370,8 +379,7 @@ export default {
       this.loading = true;
       return finalArr;
     },
-    //Requête du avg des températures par station
-
+    //Requête du avg des mesures par station
     async AvgStationTemp(query) {
       const response = await axios.post(
         import.meta.env.VITE_API_URL,
@@ -395,100 +403,25 @@ export default {
       });
       return finalArr;
     },
-    //Coloration de chaque station par température
-    async colorStationTemp() {
-      var finalAvg = await this.getstationAvg;
+    //Coloration de chaque station
+    async colorStation(stationMesure, elementMesure, colorAdd) {
+      var finalAvg = await stationMesure;
       var arr = [];
       finalAvg.forEach((element) => {
-        arr.push(Number(element.temp_avg.value));
+        arr.push(Number(eval(elementMesure)));
       });
       var min = Math.min(...arr);
       var max = Math.max(...arr);
+      this.maxLegend = max;
+      this.minLegend = min;
       var finalArr = [];
       finalAvg.forEach((element) => {
-        var hue = (1 - (element.temp_avg.value - min) / (max - min)) * 40;
+        var hue =
+          (1 - (eval(elementMesure) - min) / (max - min)) *
+            this.Color_int_station +
+          colorAdd;
         var hslp = hsl(hue, 100, 50);
-        finalArr.push([
-          element.StationName.value,
-          element.temp_avg.value,
-          hslp,
-        ]);
-      });
-      var AllMark = document.getElementsByClassName("leaflet-marker-icon");
-      finalArr.forEach((el) => {
-        for (let i = 0; i < AllMark.length; i++) {
-          if (
-            this.$refs[el[0]][0].$el.className ==
-            AllMark[i].className.split(" ")[1]
-          ) {
-            AllMark[i].style.backgroundColor = el[2];
-          }
-        }
-      });
-      for (let i = 0; i < AllMark.length; i++) {
-        if (
-          this.$refs["CAP CEPET"][0].$el.className ==
-          AllMark[i].className.split(" ")[1]
-        ) {
-          AllMark[i].style.backgroundColor = "black";
-        }
-      }
-      this.infoPopup();
-    },
-    //Coloration de chaque station par précipitation
-    async colorStationRain() {
-      var finalAvg = await this.getstationRain;
-      var arr = [];
-      finalAvg.forEach((element) => {
-        arr.push(Number(element.rain.value));
-      });
-      var min = Math.min(...arr);
-      var max = Math.max(...arr);
-      var finalArr = [];
-      finalAvg.forEach((element) => {
-        var hue = (1 - (element.rain.value - min) / (max - min)) * 40 + 180;
-        var hslp = hsl(hue, 100, 50);
-        finalArr.push([element.StationName.value, element.rain.value, hslp]);
-      });
-      var AllMark = document.getElementsByClassName("leaflet-marker-icon");
-      finalArr.forEach((el) => {
-        for (let i = 0; i < AllMark.length; i++) {
-          if (
-            this.$refs[el[0]][0].$el.className ==
-            AllMark[i].className.split(" ")[1]
-          ) {
-            AllMark[i].style.backgroundColor = el[2];
-          }
-        }
-      });
-      for (let i = 0; i < AllMark.length; i++) {
-        if (
-          this.$refs["CAP CEPET"][0].$el.className ==
-          AllMark[i].className.split(" ")[1]
-        ) {
-          AllMark[i].style.backgroundColor = "black";
-        }
-      }
-      this.infoPopup();
-    },
-    //Coloration de chaque station par humidité
-    async colorStationHumidity() {
-      var finalAvg = await this.getstationHumidity;
-      var arr = [];
-      finalAvg.forEach((element) => {
-        arr.push(Number(element.humidity.value));
-      });
-      var min = Math.min(...arr);
-      var max = Math.max(...arr);
-      var finalArr = [];
-      finalAvg.forEach((element) => {
-        var hue = (1 - (element.humidity.value - min) / (max - min)) * 40 + 275;
-        var hslp = hsl(hue, 100, 50);
-        finalArr.push([
-          element.StationName.value,
-          element.humidity.value,
-          hslp,
-        ]);
+        finalArr.push([element.StationName.value, eval(elementMesure), hslp]);
       });
       var AllMark = document.getElementsByClassName("leaflet-marker-icon");
       finalArr.forEach((el) => {
@@ -521,9 +454,14 @@ export default {
       });
       var min = Math.min(...arr);
       var max = Math.max(...arr);
+      this.maxLegend = max;
+      this.minLegend = min;
       var finalArr = [];
       finalAvg.forEach((element) => {
-        var hue = (1 - (element.speed.value - min) / (max - min)) * 40 + 120;
+        var hue =
+          (1 - (element.speed.value - min) / (max - min)) *
+            this.Color_int_station +
+          120;
         var hslp = hsl(hue, 100, 50);
         finalDir.forEach((em) => {
           if (em.StationName.value == element.StationName.value) {
@@ -562,12 +500,25 @@ export default {
       this.showHumidity = false;
       this.showWind = false;
     },
+    //Pour enlever la légende
+    unsetLegend() {
+      this.unsetEvery();
+      for (let index = 0; index <= 4; index++) {
+        this.scale[index] = "";
+      }
+      document.documentElement.style.setProperty("--color1", "black" + "");
+      document.documentElement.style.setProperty("--color2", "black" + "");
+      document.documentElement.style.setProperty("--color3", "black" + "");
+      document.documentElement.style.setProperty("--color4", "black" + "");
+      document.documentElement.style.setProperty("--color5", "black" + "");
+    },
     //Pour enlever l'affichage des stations
     unsetStation() {
       this.show = true;
       this.showMark = false;
       this.showTime = false;
       this.unsetEvery();
+      this.unsetLegend();
     },
     //Pour enlever l'affichage des régions
     unsetRegion() {
@@ -672,6 +623,7 @@ export default {
       this.showHumidity = false;
       this.showWind = false;
       this.loading = false;
+      this.unsetLegend();
 
       setTimeout(() => {
         this.reload = true;
@@ -683,6 +635,7 @@ export default {
       this.yearSlide = year;
       this.d3Test(this.inseeD3, year);
     },
+    //Permet d'avoir les nouvelles dates
     test(e) {
       var arr = [
         new Date(
@@ -699,6 +652,57 @@ export default {
           .slice(0, 10),
       ];
       this.handleRangeChangedEvent(arr);
+    },
+    //Changement des valeurs de la légende et coloration du gradient
+    async legendColorGetter() {
+      if (this.showRain == true) {
+        this.scaleUnit = "mm";
+        this.color5 = "white";
+        this.color4 = "#ADD8E6";
+        this.color3 = "#7DF9FF";
+        this.color2 = "#0000FF";
+        this.color1 = "#00008B";
+      }
+
+      if (this.showTemp == true) {
+        this.scaleUnit = "°C";
+        this.color5 = "#fed976";
+        this.color4 = "#feb24c";
+        this.color3 = "#fd8d3c";
+        this.color2 = "#f03b20";
+        this.color1 = "#bd0327";
+      }
+
+      if (this.showHumidity == true) {
+        this.scaleUnit = "%";
+        this.color5 = "#E6E6FA";
+        this.color4 = "#E0B0FF";
+        this.color3 = "#E0B0FF";
+        this.color2 = "#DA70D6";
+        this.color1 = "#800080";
+      }
+      if (this.showWind == true) {
+        this.scaleUnit = "m/s";
+        this.color5 = "#ECFFDC";
+        this.color4 = "#C1E1C1";
+        this.color3 = "#93C572";
+        this.color2 = "#93C572";
+        this.color1 = "#008000";
+      }
+      document.documentElement.style.setProperty("--color1", this.color1 + "");
+      document.documentElement.style.setProperty("--color2", this.color2 + "");
+      document.documentElement.style.setProperty("--color3", this.color3 + "");
+      document.documentElement.style.setProperty("--color4", this.color4 + "");
+      document.documentElement.style.setProperty("--color5", this.color5 + "");
+      var maxL = await this.maxLegend;
+      var minL = await this.minLegend;
+      for (let index = 0; index <= 3; index++) {
+        this.scale[index] = (
+          this.maxLegend -
+          (this.maxLegend / 5) * index
+        ).toFixed(2);
+      }
+      this.scale[4] = this.minLegend.toFixed(2);
     },
   },
 };
@@ -726,7 +730,8 @@ export default {
           () => {
             unsetEvery();
             this.showTemp = true;
-            this.colorStationTemp();
+            this.colorStation(this.getstationAvg, 'element.temp_avg.value', 0);
+            this.legendColorGetter();
           }
         "
         :class="{ orange: this.showTemp }"
@@ -737,7 +742,8 @@ export default {
           () => {
             unsetEvery();
             this.showRain = true;
-            this.colorStationRain();
+            this.colorStation(this.getstationRain, 'element.rain.value', 180);
+            this.legendColorGetter();
           }
         "
         :class="{ blue: this.showRain }"
@@ -748,7 +754,12 @@ export default {
           () => {
             unsetEvery();
             this.showHumidity = true;
-            this.colorStationHumidity();
+            this.colorStation(
+              this.getstationHumidity,
+              'element.humidity.value',
+              275
+            );
+            this.legendColorGetter();
           }
         "
         :class="{ purple: this.showHumidity }"
@@ -760,6 +771,7 @@ export default {
             unsetEvery();
             this.showWind = true;
             this.colorStationWindSpeed();
+            this.legendColorGetter();
           }
         "
         :class="{ green: this.showWind }"
@@ -775,6 +787,19 @@ export default {
       @update:modelValue="changeYear"
       class="selectosStation fade-in"
     ></v-select>
+  </div>
+  <div id="legend_l" class="fade-in" v-if="showMark">
+    <h4 class="card-title pb-2">Legend {{ this.scaleUnit }}</h4>
+    <div class="scale">
+      <div id="gradient-bar"></div>
+      <div class="indicators">
+        <div class="indicator">{{ this.scale[0] }}</div>
+        <div class="indicator">{{ this.scale[1] }}</div>
+        <div class="indicator">{{ this.scale[2] }}</div>
+        <div class="indicator">{{ this.scale[3] }}</div>
+        <div class="indicator">{{ this.scale[4] }}</div>
+      </div>
+    </div>
   </div>
 
   <!---->
@@ -879,6 +904,7 @@ export default {
     <h4>{{ this.region }}</h4>
     <div></div>
   </div>
+
   <!---->
 </template>
 <style>
@@ -946,6 +972,7 @@ export default {
   background-color: black;
   border-radius: 10px;
   transition: 0.5s;
+  opacity: 0.725 !important;
 }
 
 .leaflet-tile-pane {
@@ -1102,5 +1129,75 @@ export default {
 .v-slider-thumb__label > div {
   width: 120px;
   padding: 20px;
+}
+:root {
+  --color1: black;
+  --color2: black;
+  --color3: black;
+  --color4: black;
+  --color5: black;
+}
+
+#gradient-bar {
+  position: relative;
+  height: 400px;
+  width: 20px;
+  border-radius: 10px;
+  background: linear-gradient(
+    var(--color1),
+    var(--color2),
+    var(--color3),
+    var(--color4),
+    var(--color5)
+  );
+}
+
+#legend_l {
+  position: absolute;
+  z-index: 20;
+  width: 100px;
+
+  top: 5%;
+  left: 87%;
+  color: white;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.indicator {
+  position: relative;
+  top: 0;
+  left: 30px;
+  font-size: 1em;
+}
+.indicators {
+  height: 480px;
+  left: 30%;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+}
+.indicator::before {
+  content: "";
+  position: absolute;
+  bottom: 0.6em;
+  left: -20px;
+  right: 0px;
+  width: 1em;
+  border-top: 1.5px solid white;
+}
+
+.scale {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 </style>
