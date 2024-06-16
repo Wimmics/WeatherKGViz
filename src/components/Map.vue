@@ -412,6 +412,11 @@ export default {
       });
       var min = Math.min(...arr);
       var max = Math.max(...arr);
+      if (this.showRain == true) {
+        var temp = min;
+        min = max;
+        max = temp;
+      }
       this.maxLegend = max;
       this.minLegend = min;
       var finalArr = [];
@@ -420,7 +425,15 @@ export default {
           (1 - (eval(elementMesure) - min) / (max - min)) *
             this.Color_int_station +
           colorAdd;
+        console.log(
+          eval(elementMesure),
+          max,
+          min,
+          1 - (eval(elementMesure) - min) / (max - min),
+          hue
+        );
         var hslp = hsl(hue, 100, 50);
+
         finalArr.push([element.StationName.value, eval(elementMesure), hslp]);
       });
       var AllMark = document.getElementsByClassName("leaflet-marker-icon");
@@ -657,11 +670,11 @@ export default {
     async legendColorGetter() {
       if (this.showRain == true) {
         this.scaleUnit = "mm";
-        this.color5 = "white";
-        this.color4 = "#ADD8E6";
-        this.color3 = "#7DF9FF";
-        this.color2 = "#0000FF";
-        this.color1 = "#00008B";
+        this.color5 = "#2febe4";
+        this.color4 = "#31d2e7";
+        this.color3 = "#2583ea";
+        this.color2 = "#1961d1";
+        this.color1 = "#343ce4";
       }
 
       if (this.showTemp == true) {
@@ -696,13 +709,12 @@ export default {
       document.documentElement.style.setProperty("--color5", this.color5 + "");
       var maxL = await this.maxLegend;
       var minL = await this.minLegend;
-      for (let index = 0; index <= 3; index++) {
+      for (let index = 0; index <= 4; index++) {
         this.scale[index] = (
           this.maxLegend -
-          (this.maxLegend / 5) * index
+          ((this.maxLegend - this.minLegend) / 4) * index
         ).toFixed(2);
       }
-      this.scale[4] = this.minLegend.toFixed(2);
     },
   },
 };
