@@ -18,6 +18,7 @@ import { rgb, scaleOrdinal, schemeCategory10 } from "d3";
 
 import {
   getAvgTempPerRegion,
+  getAvgRainPerRegion,
   buildQuery_getAllStationsAvgTemp,
   buildQuery_avgRainQtyPerStation,
   buildQuery_getAllStationsAvgHumidity,
@@ -72,7 +73,7 @@ export default {
       show: true,
       showMark: false,
       showTime: false,
-      showTemp: false,
+      showTemp: true,
       showRain: false,
       scale: [],
       scaleUnit: "",
@@ -333,6 +334,11 @@ export default {
       });
       var min = Math.min(...arr);
       var max = Math.max(...arr);
+      if (this.showRain == true) {
+        var temp = min;
+        min = max;
+        max = temp;
+      }
       finalAvg.forEach((element) => {
         if (layer.feature.properties.code == element[0]) {
           layer.bindTooltip(
@@ -342,7 +348,8 @@ export default {
               " °"
           );
           var hue =
-            (1 - (element[1] - min) / (max - min)) * this.Color_int_region;
+            (1 - (element[1] - min) / (max - min)) * this.Color_int_region +
+            (this.showRain ? 180 : 0);
           layer.setStyle({
             fillColor: hsl(hue, 100, 50),
             weight: 1,
@@ -373,6 +380,35 @@ export default {
         feature.forEach((el) => {
           if (el.properties.code == element.insee.value) {
             finalArr.push([el.properties.code, element.temp_avg.value]);
+          }
+        });
+      });
+      this.loading = true;
+      return finalArr;
+    },
+    //Requête du avg des précipitations par région
+    async AvgRain() {
+      const response = await axios.post(
+        import.meta.env.VITE_API_URL,
+        {
+          query: getAvgRainPerRegion(this.start, this.end),
+        },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          responseType: "json",
+        }
+      );
+      var feature = regionsJson.features;
+      var finalArr = [];
+      response.data.results.bindings.forEach((element) => {
+        feature.forEach((el) => {
+          if (el.properties.code == element.insee.value) {
+            finalArr.push([
+              el.properties.code,
+              element.avgAnnualRainfall.value,
+            ]);
           }
         });
       });
@@ -425,13 +461,7 @@ export default {
           (1 - (eval(elementMesure) - min) / (max - min)) *
             this.Color_int_station +
           colorAdd;
-        console.log(
-          eval(elementMesure),
-          max,
-          min,
-          1 - (eval(elementMesure) - min) / (max - min),
-          hue
-        );
+
         var hslp = hsl(hue, 100, 50);
 
         finalArr.push([element.StationName.value, eval(elementMesure), hslp]);
@@ -727,6 +757,8 @@ export default {
       @click="
         () => {
           unsetStation();
+          this.getavg = this.AvgTemp();
+          this.showTemp = true;
         }
       "
       :class="{ orange: show }"
@@ -734,8 +766,52 @@ export default {
     >
       Région
     </div>
-    <div @click="unsetRegion()" :class="{ orange: showMark }" class="btn_div">
+
+    <div
+      @click="
+        () => {
+          unsetRegion();
+          this.showTemp = false;
+          this.showRain = false;
+        }
+      "
+      :class="{ orange: showMark }"
+      class="btn_div"
+    >
       Station
+    </div>
+    <div class="metrics fade-in" v-if="!this.showMark && !this.showTime">
+      <span
+        @click="
+          () => {
+            this.getavg = this.AvgTemp();
+            unsetEvery();
+            this.showTemp = true;
+            this.reload = false;
+            this.showTime = false;
+            this.loading = false;
+            this.reload = true;
+          }
+        "
+        :class="{ orange: this.showTemp }"
+        ><i class="fa-solid fa-temperature-high"></i
+      ></span>
+      <span
+        @click="
+          () => {
+            this.getavg = this.AvgRain();
+            unsetEvery();
+            this.showRain = true;
+            this.reload = false;
+            this.showTime = false;
+            this.loading = false;
+
+            this.reload = true;
+          }
+        "
+        :class="{ blue: this.showRain }"
+        ><i class="fa-solid fa-cloud-rain"></i
+      ></span>
     </div>
     <div class="metrics fade-in" v-if="this.showMark">
       <span
@@ -792,6 +868,7 @@ export default {
       ></span>
     </div>
     <v-select
+      v-if="!this.showTime"
       label="Year"
       v-model="defaultYear"
       :items="[
