@@ -2,17 +2,17 @@
 
 ## Projet de fusion des projets Angular et VueJS
 
-Ce projet vise à migrer le projet DemoKGViz-1 existant vers le framework VueJS, afin de le fusionner au projet VueJS existant Le but ultime est d'avoir un projet beaucoup plus maintenable qui n'utilise qu'un seul framework.
+Ce projet vise à migrer le projet DemoKGViz-1 existant vers le framework VueJS, afin de le fusionner au projet VueJS existant. Le but ultime est d'avoir un projet beaucoup plus maintenable qui n'utilise qu'un seul framework.
 
 ## La Map
 
-Le focus est la conversion de la map Angular vers VueJS, la map a été maintenant intégrée à l'ancien projet VueJS, Voici les fonctionnalités et infos à savoir :
+Le focus est la conversion de la map Angular vers VueJS, la map a été maintenant intégrée à l'ancien projet VueJS, voici les fonctionnalités et infos à savoir :
 
 - La Map affiche la température moyenne de chaque région, on peut sélectionner l'année que l'on souhaite.
 - En appuyant sur une région, un popup affichera l'évolution de la température de la région sélectionnée à partir de chaque station dans la région.
 - On peut délimiter la date de notre analyse en utilisant le slider pour un visuel plus concis.
 - Dans la section station, on peut choisir la mesure à analyser (température, précipitations, humidité, vitesse du vent et direction du vent).
-- La légende montre les mesures les plus importantes
+- La légende montre les mesures les plus importantes.
 - On peut choisir la station à analyser en appuyant dessus.
 - On peut supprimer toutes les stations choisies d'un clic.
 
