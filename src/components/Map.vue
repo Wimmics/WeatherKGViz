@@ -715,6 +715,7 @@ export default {
           ((this.maxLegend - this.minLegend) / 4) * index
         ).toFixed(2);
       }
+      if (this.showRain == true) this.scale.reverse();
     },
   },
 };
